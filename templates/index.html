@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Municipal Tax Record Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="layout">
+        <header class="page-header">
+            <div>
+                <h1>Smart Municipal Tax Record Management System</h1>
+                <p>Professional dashboard for municipal holding tax analysis and record management.</p>
+            </div>
+        </header>
+
+        <section class="summary-grid">
+            <article class="card metric-card">
+                <h3>Total Records</h3>
+                <p>{{ summary.total_records }}</p>
+            </article>
+            <article class="card metric-card">
+                <h3>Total Wards</h3>
+                <p>{{ summary.total_wards }}</p>
+            </article>
+            <article class="card metric-card">
+                <h3>Total Mohollas</h3>
+                <p>{{ summary.total_mohollas }}</p>
+            </article>
+            <article class="card metric-card warning">
+                <h3>Incomplete Records</h3>
+                <p>{{ summary.incomplete_records }}</p>
+            </article>
+        </section>
+
+        <section class="card filters-card">
+            <div class="section-title-row">
+                <h2>Search & Filters</h2>
+            </div>
+            <form id="filterForm" method="get" action="/" class="filters-grid">
+                <div class="field">
+                    <label for="search">Search (Owner / Holding / SWO Name)</label>
+                    <input id="search" name="search" type="text" value="{{ filters.search }}" placeholder="Type to search..." />
+                </div>
+
+                <div class="field">
+                    <label for="ward">Ward</label>
+                    <select id="ward" name="ward">
+                        <option value="">All Wards</option>
+                        {% for ward in filter_options.wards %}
+                            <option value="{{ ward }}" {% if filters.ward == ward %}selected{% endif %}>{{ ward }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="moholla">Moholla</label>
+                    <select id="moholla" name="moholla">
+                        <option value="">All Mohollas</option>
+                        {% for moholla in filter_options.mohollas %}
+                            <option value="{{ moholla }}" {% if filters.moholla == moholla %}selected{% endif %}>{{ moholla }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="rate">Rate</label>
+                    <select id="rate" name="rate">
+                        <option value="">All Rates</option>
+                        {% for rate in filter_options.rates %}
+                            <option value="{{ rate }}" {% if filters.rate == rate %}selected{% endif %}>{{ rate }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="type">Type</label>
+                    <select id="type" name="type">
+                        <option value="">All Types</option>
+                        {% for t in filter_options.types %}
+                            <option value="{{ t }}" {% if filters.type == t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="/" class="btn btn-secondary">Reset</a>
+                    <a id="exportBtn" class="btn btn-success" href="/export">Download Filtered Data</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="charts-grid">
+            <article class="card chart-card">
+                <h2>Records per Ward</h2>
+                <canvas id="wardChart"></canvas>
+            </article>
+            <article class="card chart-card">
+                <h2>Top Mohollas by Records</h2>
+                <canvas id="mohollaChart"></canvas>
+            </article>
+            <article class="card chart-card">
+                <h2>Rate Distribution</h2>
+                <canvas id="rateChart"></canvas>
+            </article>
+        </section>
+
+        <section class="card validation-card">
+            <h2>Data Validation Insights</h2>
+            <div class="validation-grid">
+                <div><span>Missing Owner Name</span><strong>{{ validation.missing_owner_name }}</strong></div>
+                <div><span>Missing Mobile</span><strong>{{ validation.missing_mobile }}</strong></div>
+                <div><span>Missing Moholla</span><strong>{{ validation.missing_moholla }}</strong></div>
+                <div><span>Total Incomplete Rows</span><strong>{{ validation.total_incomplete_rows }}</strong></div>
+            </div>
+        </section>
+
+        <section class="card table-card">
+            <div class="section-title-row">
+                <h2>Filtered Holding Records</h2>
+                <span class="result-count">Showing {{ rows|length }} rows</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            {% for col in columns %}
+                                <th>{{ col.replace('_', ' ')|title }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if rows %}
+                            {% for row in rows %}
+                                <tr>
+                                    {% for col in columns %}
+                                        <td>{{ row[col] }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="{{ columns|length }}" class="empty">No records found for current filters.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        window.dashboardData = {{ chart_data|tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
